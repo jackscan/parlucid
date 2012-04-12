@@ -1,0 +1,77 @@
+Test :=
+{
+	S := lines ;
+	lines := line lines;
+	line = /[^\n\r]+/;
+};
+
+Grammar :=
+{
+	ws = /[ \t\r\v\f]+/;
+	nl = "\n";
+	string = /"([^"]|\\")+"/;
+	regex = /\/([^\/]|\\\/)*\//;
+	identifier = /[a-zA-Z_][a-zA-Z_0-9]*/;
+
+
+	parser := parser grammar;
+	parser := grammar;
+	grammar := identifier ":=" "{" definition "}" ";" : grammar(identifier);
+	grammar := "[:" identifier ":]" ":=" regex ";" : regexGroup(identifier);
+	definition := @;
+	definition := definition production;
+	production := identifier ":=" body action ";" : production(identifier);
+	production := identifier ":=" "@" action ";" : production(identifier);
+	production := "@" ":=" body action ";" : ignoreProduction;
+	production := tokendef ";";
+	tokendef := identifier "=" string : token(identifier, string);
+	tokendef := identifier "=" regex : token(identifier, regex);
+	body := body term;
+	body := term;
+	term := identifier : nonTerminal(identifier);
+	term := string : terminal(string);
+	term := regex : terminal(regex);
+	action := @ : action;
+	action := ":" commandlist : action;
+	commandlist := command;
+	commandlist := commandlist "," command;
+	command := identifier : function(identifier);
+	command := identifier "(" list ")" : function(identifier);
+	command := lparameter "=" identifier "(" ")" : function(identifier);
+	command := lparameter "=" identifier "(" list ")" : function(identifier);
+	command := lparameter "=" parameter : assignment;
+	lparameter := parameter : lparameter;
+	list := list "," parameter : parameter;
+	list := parameter : parameter;
+	parameter := parameter "." identifier : concatParameter(identifier);
+	parameter := identifier : concatParameter(identifier);
+	@ := nl : newLine;
+	@ := ws;
+};
+
+Regex :=
+{
+	C = /[^\^\-\|\(\)\*\+\?\[\]\\]/;
+	
+	S := E;
+	S := E "-" E : lookahead;
+	E := E "|" D : alternative;
+	E := D;
+	D := D F : concat;
+	D := F;
+	F := "(" E ")";
+	F := F "*" : asterisk;
+	F := F "+" : plus;
+	F := F "?" : optional;
+	F := I : character;
+	F := "[" G "]" : group;
+	F := "[" "^" G "]" : inverseGroup;
+	G := I : singleton;
+	G := I "-" I : interval;
+	G := G I : concatSingleton;
+	G := G I "-" I : concatInterval;
+	
+	A = /[^\0]|\0/;
+	I := C: pushChar(C);
+	I := "\\" A : pushChar(A);
+};

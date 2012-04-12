@@ -1,0 +1,23 @@
+CmdLine :=
+{
+	iarg = "-i";
+	oarg = "-o";
+	name = /[A-Za-z0-9_.\/\\\-\:]+/;
+	path = /([A-Za-z]\:[\/\\])?[A-Za-z0-9_.\/\\\-]*/;
+	value = /("([^"]|\\")*")|[0-9.]+/;
+
+	cmds := cmds file : file(file.path);
+	cmds := cmds loutput;
+	cmds := cmds grammar;
+	cmds := cmds assign : assign(assign.name, assign.value);	
+	cmds := @;
+	
+	file := name : path = name;
+	file := path;
+	loutput := "-o" file: loutput(file.path);
+	grammar := "-i" file: grammar(file.path);
+	assign := name "=" value;
+	assign := name "=" path : value = stringize(path);
+	
+	@ := /[ \t]+/;
+};

@@ -1,0 +1,52 @@
+module parserluagen {
+
+import "class" : new ;
+import common ;
+import path ;
+import string ;
+
+rule generate-parsercode ( targets + : source : properties * )
+{
+	DEPENDS $(targets) : main.lua fsmgen.lua parsergen.lua tokensgen.lua ; 
+}
+
+actions generate-parsercode
+{
+	parserluagen -i $(>) path=gen -o a.lua main.lua fsmgen.lua parsergen.lua tokensgen.lua
+}
+
+rule scan-gramdef ( src )
+{
+	local srcname = [ path.join [ $(src).path ] [ $(src).name ] ] ;
+	#echo "source: "  $(srcname) ;
+	
+	local result = [ string.words [ SHELL "gramdefscanner.exe $(srcname)" ] ] ;
+	#echo "result: " $(result) ;
+	return $(result) ;
+}
+
+
+rule generate-parser ( project name : property-set : source )
+{
+	#echo "Name: " $(name) ;
+	
+	local result ;
+	local s = $(source) ;
+    #for local s in $(sources)
+    {
+    	local t = [ scan-gramdef $(s) ] ;
+    	local suffixes = Parser Tokenizer Tokens ;
+    	local files = $(t)$(suffixes) ;
+    	#echo "target: " $(files) ;
+		#echo  [ $(s).name ] ;
+		local a = [ new action $(s) : parsergen.generate-parsercode : $(property-set) ] ;
+
+		for local f in $(files)
+		{
+			#: [ path.join gen private ]
+			result += [ new file-target $(f) : CPP : $(project) : $(a) : [ path.native [ path.join [ path.pwd ] gen private ] ] ] ;
+		}
+	}
+	return $(result) ;
+}
+}

@@ -1,0 +1,29 @@
+commandline parameter:
+
+   -i <grammar>   grammar definition file
+   -o <lua-out>   optional lua output file
+   <lua-file>     lua script file
+   <key>=<value>  set lua global
+   
+Lua files need to contain global function main which gets called for code generation.
+Lua files optionally may contain global function log which gets called for log generation.
+
+Functions main and log get called for each grammar found.
+
+
+
+
+
+Fsm Generation:
+
+Second parameter of main contains table for fsm.
+fsm members:
+
+   - firstLinearState
+   - nrOfStates
+   - [state]
+      - potential
+      - list of transitions
+         - char   (input char for transition)
+         - tokens (bitmask of output tokens)
+         - next   (target state of transition)

@@ -1,0 +1,65 @@
+LuaTemplate := 
+{
+	spaces	= /[\t ]+/;
+	name = /[A-Za-z_][A-Za-z0-9_]*/;
+	nl		= /\n|\r\n|\r/;
+	eof		= "\0";
+	textintro = "{%";
+	code	= /[{%]?[^\n\r{%]*/;
+	quote	= "\"";
+	chunk	= /([^\n\r%$@"]|%[^}\n\r$@"]|\\[$@]|@[^{;\:"])*/;
+	snippet = /[^{}]*/;
+	filename = /([A-Za-z]\:[\/\\])?[A-Za-z0-9_.\/\\\-]*/;
+	
+	template := template codeline;
+	template := codeline;
+	codeline := codeindent term eol : codenl();
+	term := term "{%" text "%}";
+	term := term code: code(code);
+	term := @;
+	var := "$" name;
+	embedtextbegin := chunks nl : embedtextbegin();
+	embedtext := chunks;
+	embedtext := embedtextbegin textlines lastline : embedtextend();
+	condembed := embedif embedtext elsechunk "@;" : embedend();
+	embedif := "@{" snippet "}?" : embedif(snippet);
+	call := "$" "{" snippet "}";
+	embed := "@{" snippet "}";
+	elsechunk := embedelse embedtext;
+	elsechunk := @;
+	embedelse := "@:": embedelse();
+	include := "@\"" includefile "\"";
+	includefile :=  filename: include(filename);
+		
+	eol := nl;
+	eol := eof;
+	codeindent := spaces : codeindent(spaces);
+	codeindent := @ : codeindent();
+	
+	text := textbegin textlines lastline : textend();
+	text := chunks;
+	textbegin := chunks nl : textbegin();
+	textlines := textlines textline;
+	textlines := @;
+	textline := textindent nl : textnl();
+	textline := textindent chunks realchunk nl : textnl();
+	textline := textindent chunks weakchunk nl : weaknl();
+	lastline := textindent chunks;
+	
+	chunks := chunks textchunk;
+	chunks := @;
+	textchunk := realchunk;
+	textchunk := weakchunk;
+	realchunk := quote : quote();
+	realchunk := chunk : chunk(chunk);
+	weakchunk := var : variable(var.name);
+	weakchunk := call: snippet(call.snippet);
+	weakchunk := embed : embed(embed.snippet);
+	weakchunk := condembed;
+	weakchunk := include;
+	
+	
+	textindent := spaces : textindent(spaces);
+	textindent := @ : textindent();
+};
+

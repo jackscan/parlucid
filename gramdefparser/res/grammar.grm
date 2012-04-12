@@ -1,0 +1,67 @@
+Grammar :=
+{
+	ws = /[ \t\r\v\f]+/;
+	nl = "\n";
+	string = /"([^"]|\\")+"/;
+	regex = /\/([^\/]|\\\/)*\//;
+	identifier = /[a-zA-Z][a-zA-Z_0-9]*/;
+
+
+	parser := {grammar};
+	grammar := identifier ":=" "{" {production} "}" ";" : grammar(identifier);
+	grammar := "[:" identifier ":]" ":=" regex ";" : regexGroup(identifier);
+	production := identifier ":=" body action ";" : production(identifier, body.no);
+	production := identifier ":=" "@" action ";" : production(identifier);
+	production := "@" ":=" body action ";" : ignoreProduction(body.no);
+	production := identifier "=" (string|regex) ";" : token(identifier, string, regex);
+	
+	body := body "|" bodyexpr : no = alternative(body.no, bodyexpr.no);
+	body := bodyexpr : no = bodyexpr.no;
+	bodyexpr := bodyexpr bodyterm: addTerm(bodyexpr.no, bodyterm.id), no = bodyexpr.no;
+	bodyexpr := bodyterm : no = newBodyExpr(bodyterm.id);
+	bodyterm := term : id = term.id;
+	bodyterm := "[" body "]" : id = optional(body.no);
+	bodyterm := "{" body "}" : id = list(body.no);
+	bodyterm := "(" body ")" : id = newSubExpr(body.no);
+	
+	term := identifier : nonTerminal(identifier);
+	term := string|regex : terminal(string, regex);
+	term := "$" : endToken();
+	action := @ : action();
+	action := ":" command {"," command} : action();
+	command := [lparameter "="] identifier "(" [parameter {"," parameter}] ")" : function(identifier);
+	command := lparameter "=" parameter : assignment();
+	lparameter := parameter : lparameter();
+	parameter := parameter "." identifier : concatParameter(identifier);
+	parameter := identifier : parameter(identifier);
+	@ := nl : newLine();
+	@ := ws;
+};
+
+Regex :=
+{
+	C = /[^\^\-\|\(\)\*\+\?\[\]\\]/;
+	
+	S := E;
+	S := E "-" E : lookahead();
+	E := E "|" D : alternative();
+	E := D;
+	D := D F : concat();
+	D := F;
+	F := "(" E ")";
+	F := F "*" : asterisk();
+	F := F "+" : plus();
+	F := F "?" : optional();
+	F := I : character(I.C);
+	F := "[" G "]" : group();
+	F := "[" "^" G "]" : inverseGroup();
+	G := I : singleton(I.C);
+	G := J "-" I : interval(J.I.C, I.C);
+	G := G I : concatSingleton(I.C);
+	G := G J "-" I : concatInterval(J.I.C, I.C);
+	J := I;
+	
+	A = /[^\0]|\0/;
+	I := C;
+	I := "\\" A : C = escChar(A);
+};

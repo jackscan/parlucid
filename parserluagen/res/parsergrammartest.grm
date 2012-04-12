@@ -1,0 +1,29 @@
+Regex :=
+{
+	C = /[^\^\-\|\(\)\*\+\?\[\]\\]/;
+	
+	S := E;
+	S := E "-" E : lookahead();
+	E := E "|" D : alternative();
+	E := D;
+	D := D F : concat();
+	D := F;
+	F := "(" E ")";
+	F := F "*" : asterisk();
+	F := F "+" : plus();
+	F := F "?" : optional();
+	F := I : character(I.C);
+	F := "[" G "]" : group();
+	F := "[" "^" G "]" : inverseGroup();
+	G := I : singleton(I.C);
+	G := J "-" I : interval(J.I.C, I.C);
+	G := G I : concatSingleton(I.C);
+	G := G J "-" I : concatInterval(J.I.C, I.C);
+	J := I;
+	
+	A = /[^\0]|\0/;
+	I := C;
+	I := "\\" A : C = escChar(A);
+};
+
+

@@ -1,0 +1,21 @@
+Regex :=
+{
+	S := E;
+	S := E-E : lookahead;
+	E := E|D : alternative;
+	E := D;
+	D := DF : concat;
+	D := F;
+	F := (E);
+	F := F* : asterisk;
+	F := F+ : plus;
+	F := F? : optional;
+	F := I : character;
+	F := [G] : group;
+	F := [^G] : inverseGroup;
+	G := I : singleton;
+	G := I-I : interval;
+	G := GI : concatSingleton;
+	G := GI-I : concatInterval;
+	F := [H] : predefined;
+};

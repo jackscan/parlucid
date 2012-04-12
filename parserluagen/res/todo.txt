@@ -1,0 +1,35 @@
+bind fsmgen to lua so lua has access to Fsm and it's member functions:
+	- file/directory layout should be customizable through lua
+	- fsmgen might get obsolete
+	- or fsmgen is reduced to just set up binding between Fsm, AlphabetGen and Lua.
+	- or fsmgen generates lua code for initalizing table for fsm
+
+think about removing while loop when all accepted tokens are terminal and no reduce has empty body
+
+create context sensitive follow set for ignore infos, since ignore infos have no meaningful follows
+	- propagate context of caller to ignore-state-handlers
+	
+create context sensitive follow set
+	- maybe post processing table
+		- No: infos for follows is already lost after state table calculation
+	- or distinguish InfoItems with different follow set
+	- or distinguish between different follows sets of InfoItem
+		- change "typedef std::map<ItemCore, Set> InfoItems" to "typedef std::map<ItemCore, std::set<Set> > InfoItems"
+		- adapt info_union_add to check for new entry in lhs
+		- adapt LalrParsingTable::Action to store follow set and distance to follow (i.e. size of remaining body of info)
+			- distance-follow pairs: std::map<int, Set>
+		- in ParsingContext check for each state the corresponding entry actions and their follow-distance pair
+
+optimize lexer to look for possible tokens.
+	- look for possible tokens at each exit of process()
+	- simplify context update also
+
+make recall overloadable by parserCtrl
+	- so there is a chance to change token, cause of changing context
+	- or recall token when file re-changes
+	
+improve lexer
+	- do we need token priorities?
+		- yes
+	- lookahead
+	- subexpressions
