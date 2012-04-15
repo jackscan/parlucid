@@ -363,4 +363,5 @@ template<typename C, typename O> bool Nfa<C, O>::empty() const
 
 template class Nfa<char, char>;
 template class Nfa<char, int>;
+template class Nfa<unsigned char, int>;
 template class Nfa<int, int>;

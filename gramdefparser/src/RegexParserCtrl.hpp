@@ -13,8 +13,9 @@
 class RegexParserCtrl
 {
 public:
-	typedef Nfa<char> NfaChar;
-	typedef Alphabet<char> AlphabetChar;
+	typedef unsigned char Char;
+	typedef Nfa<Char> NfaChar;
+	typedef Alphabet<Char> AlphabetChar;
 	typedef int Token;
 
 	RegexParserCtrl(const std::string& regex);

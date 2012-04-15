@@ -21,12 +21,12 @@ int RegexParserCtrl::parse()
 	return end;
 }
 
-const Nfa<char>& RegexParserCtrl::getNfa() const
+const RegexParserCtrl::NfaChar& RegexParserCtrl::getNfa() const
 {
 	return nfas.top();
 }
 
-const Nfa<char>& RegexParserCtrl::getLookahead() const
+const RegexParserCtrl::NfaChar& RegexParserCtrl::getLookahead() const
 {
 	return lookaheadNfa;
 }
@@ -109,7 +109,7 @@ void RegexParserCtrl::optional()
 
 void RegexParserCtrl::character(const char* ch)
 {
-	nfas.push(NfaChar(*ch));
+	nfas.push(NfaChar((Char)*ch));
 }
 
 void RegexParserCtrl::group()
@@ -119,29 +119,29 @@ void RegexParserCtrl::group()
 
 void RegexParserCtrl::inverseGroup()
 {
-	AlphabetChar inv(Interval<char>(std::numeric_limits<char>::min(), std::numeric_limits<char>::max()));
+	AlphabetChar inv(Interval<Char>(std::numeric_limits<Char>::min(), std::numeric_limits<Char>::max()));
 	inv.del(alphabet);
 	nfas.push(NfaChar(inv));
 }
 
 void RegexParserCtrl::singleton(const char* ch)
 {
-	alphabet = AlphabetChar(*ch);
+	alphabet = AlphabetChar((Char)*ch);
 }
 
 void RegexParserCtrl::interval(const char* first, const char* last)
 {
-	alphabet = AlphabetChar(Interval<char>(*first, *last));
+	alphabet = AlphabetChar(Interval<Char>((Char)*first, (Char)*last));
 }
 
 void RegexParserCtrl::concatSingleton(const char* ch)
 {
-	alphabet.add(*ch);
+	alphabet.add((Char)*ch);
 }
 
 void RegexParserCtrl::concatInterval(const char* first, const char* last)
 {
-	alphabet.add(*first, *last);
+	alphabet.add((Char)*first, (Char)*last);
 }
 
 const char* RegexParserCtrl::escChar(const char* ch)
@@ -163,7 +163,7 @@ const char* RegexParserCtrl::escChar(const char* ch)
 	return result;
 }
 
-Nfa<char> RegexParserCtrl::popNfa()
+RegexParserCtrl::NfaChar RegexParserCtrl::popNfa()
 {
 	if (!nfas.empty())
 	{

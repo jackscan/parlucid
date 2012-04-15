@@ -8,7 +8,6 @@
 #include <sstream>
 #include <cctype>
 
-typedef char Char;
 typedef int Token;
 
 /*static const Fsm<char>* lua_Fsm_getThis(lua_State *L)
@@ -116,12 +115,12 @@ static int lua_Fsm_getNumberOfStates(lua_State *L)
     }
 }*/
 
-static void insertLuaTransitionEntry(lua_State* lua, char symbol, Fsm<char>::State nextState, const BitSequence<Token>& output)
+static void insertLuaTransitionEntry(lua_State* lua, Char symbol, Fsm<Char>::State nextState, const BitSequence<Token>& output)
 {
     lua_pushinteger(lua, (lua_Integer)lua_objlen(lua, -1) + 1);
     lua_newtable(lua);
 
-    lua_pushlstring(lua, &symbol, 1);
+    lua_pushinteger(lua, (lua_Integer)symbol);
     lua_setfield(lua, -2, "char");
 
     lua_pushinteger(lua, (lua_Integer)nextState);
@@ -136,12 +135,12 @@ static void insertLuaTransitionEntry(lua_State* lua, char symbol, Fsm<char>::Sta
     lua_settable(lua, -3);
 }
 
-static void createTransitions(lua_State* lua, const Fsm<char>& fsm)
+static void createTransitions(lua_State* lua, const Fsm<Char>& fsm)
 {
     std::map<Fsm<Char>::State,BitSequence<Token> > potentialOutputs;
     fsm.getPotentialOutputs(potentialOutputs);
 
-    for (Fsm<char>::State state = 0; state < fsm.getNumberOfStates(); ++state)
+    for (Fsm<Char>::State state = 0; state < fsm.getNumberOfStates(); ++state)
     {
         lua_pushinteger(lua, (lua_Integer)state);
         lua_newtable(lua);
@@ -186,12 +185,12 @@ static void createTransitions(lua_State* lua, const Fsm<char>& fsm)
 				results[accepted.lower_bound(*isym)] = result;*/
 		}
 
-        std::set<char> lower_bounds = accepted.lower_bound();
+        std::set<Char> lower_bounds = accepted.lower_bound();
 
-        for (std::set<char>::const_iterator iChar = lower_bounds.begin(); iChar != lower_bounds.end();)
+        for (std::set<Char>::const_iterator iChar = lower_bounds.begin(); iChar != lower_bounds.end();)
         {
-            char lower = *iChar;
-            char upper = accepted.upper_bound(lower);
+            Char lower = *iChar;
+            Char upper = accepted.upper_bound(lower);
 
             Fsm<Char>::State nextState = state;
             const BitSequence<Token>& output = fsm.next(nextState, lower);
@@ -199,10 +198,10 @@ static void createTransitions(lua_State* lua, const Fsm<char>& fsm)
             insertLuaTransitionEntry(lua, lower, nextState, output);
             
             ++iChar;
-            if (upper < std::numeric_limits<char>::max() && (iChar == lower_bounds.end() || upper + 1 < *iChar))
+            if (upper < std::numeric_limits<Char>::max() && (iChar == lower_bounds.end() || upper + 1 < *iChar))
             {
                 char next = upper + 1;
-                insertLuaTransitionEntry(lua, next, Fsm<char>::ERROR_STATE, BitSequence<Token>());
+                insertLuaTransitionEntry(lua, next, Fsm<Char>::ERROR_STATE, BitSequence<Token>());
             }
         }
 
@@ -210,7 +209,7 @@ static void createTransitions(lua_State* lua, const Fsm<char>& fsm)
     }
 }
 
-void createLuaFsm(lua_State * lua, const Fsm<char>& fsm)
+void createLuaFsm(lua_State * lua, const Fsm<Char>& fsm)
 {
 	lua_newtable(lua);
 

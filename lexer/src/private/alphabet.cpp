@@ -306,6 +306,7 @@ template<typename T> void Alphabet<T>::roundBoundaries(const std::set<Interval<T
 	}
 }
 
+template class Alphabet<unsigned char>;
 template class Alphabet<char>;
 template class Alphabet<unsigned short>;
 template class Alphabet<short>;

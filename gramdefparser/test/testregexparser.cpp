@@ -9,6 +9,6 @@ BOOST_AUTO_TEST_CASE(test_regexparser)
 	RegexParserCtrl parser(regex);
 	BOOST_CHECK_EQUAL((int)regex.length(), parser.parse());
 	
-	Nfa<char> nfa = parser.getNfa();
+	RegexParserCtrl::NfaChar nfa = parser.getNfa();
 	BOOST_CHECK(nfa.input().contains('/'));
 }

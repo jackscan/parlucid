@@ -172,6 +172,133 @@ BOOST_AUTO_TEST_CASE(test_roundBoundaries)
 	}
 }
 
+BOOST_AUTO_TEST_CASE(test_roundUnsignedBoundaries)
+{
+	{
+		std::set<Interval<unsigned char> > spaces;
+		spaces.insert(Interval<unsigned char>(' ', ' '));
+		spaces.insert(Interval<unsigned char>('"', '"'));
+		spaces.insert(Interval<unsigned char>('/', '/'));
+		spaces.insert(Interval<unsigned char>(':', ';'));
+		spaces.insert(Interval<unsigned char>('@', '@'));
+		spaces.insert(Interval<unsigned char>('[', '['));
+		spaces.insert(Interval<unsigned char>('_', '_'));
+		spaces.insert(Interval<unsigned char>('{', '{'));
+		spaces.insert(Interval<unsigned char>('}', '}'));
+
+		Alphabet<unsigned char> a;
+		a.add('\t', '\r');
+		a.add('A', 'Z');
+		a.add('a', 'z');
+
+		a.roundBoundaries(spaces);
+		BOOST_CHECK_EQUAL(a.intervals().size(), 3u);
+		BOOST_CHECK_EQUAL(a.upper_bound('\t'), '\r');
+		BOOST_CHECK_EQUAL(a.lower_bound('\r'), '\t');
+		BOOST_CHECK_EQUAL(a.upper_bound('@'), '[');
+		BOOST_CHECK_EQUAL(a.lower_bound('['), '@');
+		BOOST_CHECK_EQUAL(a.upper_bound('a'), '{');
+		BOOST_CHECK_EQUAL(a.lower_bound('{'), 'a');
+	}
+	{
+		std::set<Interval<unsigned char> > spaces;
+		unsigned char cmin = std::numeric_limits<unsigned char>::min();
+		unsigned char cmax = std::numeric_limits<unsigned char>::max();
+		spaces.insert(Interval<unsigned char>(cmin, cmax));
+		Alphabet<unsigned char> a;
+
+		a.add('0', '1');
+		a.roundBoundaries(spaces);
+		BOOST_CHECK_EQUAL(a.intervals().size(), 0u);
+	}
+	{
+		std::set<Interval<unsigned char> > spaces;
+		spaces.insert(Interval<unsigned char>('.', '/'));
+		spaces.insert(Interval<unsigned char>('b', 'b'));
+		Alphabet<unsigned char> a;
+
+		unsigned char cmin = std::numeric_limits<unsigned char>::min();
+		unsigned char cmax = std::numeric_limits<unsigned char>::max();
+
+		a.add(cmin, '-');
+		a.add('0', '2');
+		a.add(':', 'a');
+		a.add('c', cmax);
+
+		a.roundBoundaries(spaces);
+
+		BOOST_CHECK_EQUAL(a.intervals().size(), 4u);
+		BOOST_CHECK_EQUAL(a.upper_bound(cmin), '/');
+		BOOST_CHECK_EQUAL(a.lower_bound('2'), '0');
+		BOOST_CHECK_EQUAL(a.upper_bound('0'), '2');
+		BOOST_CHECK_EQUAL(a.lower_bound('a'), ':');
+		BOOST_CHECK_EQUAL(a.upper_bound(':'), 'a');
+		BOOST_CHECK_EQUAL(a.lower_bound(cmax), 'b');
+		BOOST_CHECK_EQUAL(a.upper_bound('b'), cmax);
+
+	}
+	// test decreasing intervals
+	{
+		std::set<Interval<unsigned char> > spaces;
+		spaces.insert(Interval<unsigned char>('c', 'e'));
+		spaces.insert(Interval<unsigned char>('3', '5'));
+		Alphabet<unsigned char> a;
+
+		a.add('a', 'e');
+		a.add('3', '6');
+
+		a.roundBoundaries(spaces);
+
+		BOOST_CHECK_EQUAL(a.intervals().size(), 2u);
+		BOOST_CHECK_EQUAL(a.lower_bound('c'), 'a');
+		BOOST_CHECK_EQUAL(a.upper_bound('a'), 'c');
+		BOOST_CHECK_EQUAL(a.lower_bound('6'), '4');
+		BOOST_CHECK_EQUAL(a.upper_bound('4'), '6');
+	}
+	// test correct rounding
+	{
+		std::set<Interval<unsigned char> > spaces;
+		spaces.insert(Interval<unsigned char>('4', '5'));
+		Alphabet<unsigned char> a;
+
+		a.add('5', '6');
+
+		a.roundBoundaries(spaces);
+
+		BOOST_CHECK_EQUAL(a.intervals().size(), 1u);
+		BOOST_CHECK_EQUAL(a.lower_bound('6'), '4');
+		BOOST_CHECK_EQUAL(a.upper_bound('4'), '6');
+	}
+	// test uneffective spaces
+	{
+		std::set<Interval<unsigned char> > spaces;
+		spaces.insert(Interval<unsigned char>('4', '5'));
+		Alphabet<unsigned char> a;
+
+		a.add('3', '6');
+
+		a.roundBoundaries(spaces);
+
+		BOOST_CHECK_EQUAL(a.intervals().size(), 1u);
+		BOOST_CHECK_EQUAL(a.lower_bound('6'), '3');
+		BOOST_CHECK_EQUAL(a.upper_bound('3'), '6');
+	}
+	// test interval deletion
+	{
+		std::set<Interval<unsigned char> > spaces;
+		spaces.insert(Interval<unsigned char>('3', '6'));
+		spaces.insert(Interval<unsigned char>('a', 'c'));
+		Alphabet<unsigned char> a;
+
+		a.add('4', '5');
+		a.add('a', 'c');
+
+		a.roundBoundaries(spaces);
+
+		BOOST_CHECK_EQUAL(a.intervals().size(), 0u);
+	}
+}
+
 BOOST_AUTO_TEST_CASE(test_clear)
 {
 	Alphabet<char> a;

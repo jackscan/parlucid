@@ -26,6 +26,7 @@ FILE* openFile(const char* filename, const char* mode)
 }
 
 typedef int Token;
+typedef unsigned char Char;
 
 std::string getTokenName(const std::map<Token, std::string>& tokenNames, Token token)
 {
@@ -241,7 +242,7 @@ int main(int argc, char *argv[])
 
 			for (std::map<std::string, GrammarParserCtrl::AnnotatedGrammar>::iterator igram = grammars.begin(); igram != grammars.end(); ++igram)
 			{
-				Fsm<char> fsm(Nfa<char>::combine(igram->second.nfas));
+				Fsm<Char> fsm(Nfa<Char>::combine(igram->second.nfas));
 				fsm.reduce();
 				LalrParsingTable<Token> table = igram->second.grammar.createParsingTable();
 

@@ -22,7 +22,8 @@
 class GrammarParserCtrl: public ParserLog
 {
 public:
-	typedef char Char;
+	typedef unsigned char Char;
+	typedef std::basic_string<Char> String;
 	typedef int Token;
 	typedef LalrGrammar<Token> Gram;
 	typedef std::basic_string<Token> Parameter;
@@ -91,7 +92,7 @@ public:
 
 private:
 
-	static std::string& replaceEscapes(std::string&);
+	static String replaceEscapes(std::string&);
 
 	/// Inlines productions without actions where head is referenced once.
 	void inlineProductions();

@@ -404,7 +404,7 @@ void GrammarParserCtrl::addTerminal(Token token, const std::string& regex)
       case '"':
       {
          std::string unquotedRegex = regex.substr(1, regex.length() - 2);
-         nfa = Nfa<char>(replaceEscapes(unquotedRegex));
+         nfa = Nfa<Char>(replaceEscapes(unquotedRegex));
          //currentLookahead = Nfa<char>();
          break;
       }
@@ -419,10 +419,11 @@ void GrammarParserCtrl::addTerminal(Token token, const std::string& regex)
    currentGrammar.nfas.push_back(nfa);
 }
 
-std::string& GrammarParserCtrl::replaceEscapes(std::string& str)
+GrammarParserCtrl::String GrammarParserCtrl::replaceEscapes(std::string& str)
 {
    bool escaped = false;
-   std::string::iterator iWrite = str.begin();
+   String result(str.length(), '\0');
+   String::iterator iWrite = result.begin();
    for (std::string::const_iterator iRead = str.begin(); iRead != str.end(); ++iRead)
       if (!escaped && *iRead == '\\') escaped = true;
       else
@@ -446,11 +447,11 @@ std::string& GrammarParserCtrl::replaceEscapes(std::string& str)
                   break;
             }
          escaped = false;
-         *iWrite = ch;
+         *iWrite = (Char)ch;
          ++iWrite;
       }
-   str.resize(iWrite - str.begin());
-   return str;
+   result.resize(iWrite - result.begin());
+   return result;
 }
 
 int GrammarParserCtrl::shift(int context)

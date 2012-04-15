@@ -7,7 +7,9 @@
 
 #include <string>
 
-void createLuaFsm(lua_State * lua, const Fsm<char>& fsm);
+typedef unsigned char Char;
+
+void createLuaFsm(lua_State * lua, const Fsm<Char>& fsm);
 void createLuaContext(lua_State * lua, const ParserContext<int>& context);
 
 #endif

@@ -1,6 +1,7 @@
 #include "../lexer.hpp"
 
 template class Lexer<char>;
+template class Lexer<unsigned char>;
 
 template<typename T, class F>
 void Lexer<T,F>::init(const Fsm& fsm)

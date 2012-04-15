@@ -977,4 +977,5 @@ template<typename T, typename O> void Fsm<T, O>::printTable()
 
 template class Fsm<char, char>;
 template class Fsm<char, int>;
+template class Fsm<unsigned char, int>;
 template class Fsm<int, int>;
