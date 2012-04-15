@@ -27,3 +27,14 @@ fsm members:
          - char   (input char for transition)
          - tokens (bitmask of output tokens)
          - next   (target state of transition)
+         
+Tokenizer:
+   void begin(context)
+      - initialize tokenizer with given context
+   int end(token)
+      - sets token to 
+      - returns the length of processed token
+   bool process(symbols,len)
+      - symbols pointer to input buffer
+      - len length of input buffer
+      - returns true if internal state is not ERROR_STATE
