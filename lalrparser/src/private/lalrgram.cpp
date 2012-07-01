@@ -417,26 +417,42 @@ template<typename T, T N> typename LalrGrammar<T,N>::Information& LalrGrammar<T,
 	calcClosure(info, infoFirsts);
 	if (!ignoreInfo && !ignoreStartInfo.items.empty())
 	{
-		// for all items of ignoreStartInfo
-		for (typename InfoItems::const_iterator iter = ignoreStartInfo.items.begin(); iter != ignoreStartInfo.items.end(); ++iter)
+		bool onlyReduce = true;
+		// check if info contains only reduceable items, i.e. item dot points to end of production body
+		for (typename InfoItems::const_iterator iter = info.items.begin(); iter != info.items.end(); ++iter)
 		{
 			const String &body = this->productions[iter->first.productionNo].body();
 			size_t dot = iter->first.dot;
-			assert(0 == dot);
-			// // with first not in firsts of regular items
-			if (dot < body.length() /*&& infoFirsts.find(body[dot]) == infoFirsts.end()*/)
+			if (dot < body.length())
 			{
-				// make copy
-				Item ignoreItem = *iter;
-				// add firsts of regular items to follows of ignore item
-				set_union_add(ignoreItem.second, infoFirsts);
-				// and add to info
-				info.items.insert(ignoreItem);
+				onlyReduce = false;
+				break;
 			}
-			// else this is an ignore production with empty body?
 		}
-		// calc closure with ignore items
-		calcClosure(info, infoFirsts);
+		
+		if (!onlyReduce)
+		{
+			// for all items of ignoreStartInfo
+			for (typename InfoItems::const_iterator iter = ignoreStartInfo.items.begin(); iter != ignoreStartInfo.items.end(); ++iter)
+			{
+				const String &body = this->productions[iter->first.productionNo].body();
+				size_t dot = iter->first.dot;
+				assert(0 == dot);
+				// // with first not in firsts of regular items
+				if (dot < body.length() /*&& infoFirsts.find(body[dot]) == infoFirsts.end()*/)
+				{
+					// make copy
+					Item ignoreItem = *iter;
+					// add firsts of regular items to follows of ignore item
+					set_union_add(ignoreItem.second, infoFirsts);
+					// and add to info
+					info.items.insert(ignoreItem);
+				}
+				// else this is an ignore production with empty body?
+			}
+			// calc closure with ignore items
+			calcClosure(info, infoFirsts);
+		}
 	}
 
 
