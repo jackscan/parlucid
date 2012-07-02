@@ -51,7 +51,7 @@ function Parser(name, parser, tokenNames)
 		if next(parser.captures[tok]) then
 			return parser:getTokenName(tok).."Attr"
 		else
-			return "lexeme"
+			return "Lexeme"
 		end
 	end
 	
@@ -76,15 +76,15 @@ function Parser(name, parser, tokenNames)
 	
 	function generateTypeDefinitions()
 		{%
-		type lexeme []byte
-		type terminalList []lexeme
-		type parseraction func(p *parser, str lexeme)
+		type Lexeme []byte
+		type terminalList []Lexeme
+		type parseraction func(p *parser, str Lexeme)
 		type parsermap map[int]parseraction
-		type parserstate int
+		type ParserState int
 		type parser struct {
 			listener ParserListener
 			attribs attributeStack 
-			stack []parserstate
+			stack []ParserState
 			unread bool
 		}
 		
@@ -120,7 +120,7 @@ function Parser(name, parser, tokenNames)
 				%}
 				--[[else
 				{%
-				type ${getCaptureType(tok)} lexeme
+				type ${getCaptureType(tok)} Lexeme
 				%}]]
 				end
 			end
@@ -138,20 +138,20 @@ function Parser(name, parser, tokenNames)
 	function generateErrorType()
 		{%
 		type ParserError struct {
-			token	int
-			lexeme
-			expected tokenSet
-			stack []parserstate
+			token    int
+			lex      Lexeme
+			expected TokenSet
+			stack    []ParserState
 		}
 
 		func (e ParserError) Error() string {
 			expstr := make([]string, len(e.expected))
 			for i, exp := range e.expected {
-				expstr[i] = tokenNames[exp]
+				expstr[i] = TokenNames[exp]
 			}
 			return fmt.Sprintf("error at <%s>: %s\\n expected: %s\\n",
-				tokenNames[e.token],
-				e.lexeme,
+				TokenNames[e.token],
+				e.lex,
 				strings.Join(expstr, ", "))
 		}
 		%}
@@ -222,7 +222,7 @@ function Parser(name, parser, tokenNames)
 		local headstack = getCaptureStackName(head)
 		{%
 		// $headname ->@{for i,v in ipairs(body) do} ${self:getTokenComment(v)}@{end}
-		func reduce$prodNo(p *parser, str lexeme) {
+		func reduce$prodNo(p *parser, str Lexeme) {
 			p.reduce($headtok, $bodylen)
 			@{self:generateCapturesUpdate(prodNo, lparams)}
 			@{if actions then for i, action in pairs(actions) do self:generateAction(self.productions[prodNo], action) end end}
@@ -261,7 +261,7 @@ function Parser(name, parser, tokenNames)
 		end
 		
 		--[[if #arg > 1 then
-			result = "lexeme("..result..")"
+			result = "Lexeme("..result..")"
 		end]]
 		
 		return result
@@ -349,16 +349,16 @@ function Parser(name, parser, tokenNames)
 			end
 			-- has at least on argument
 			if action[1] then
-				write(" lexeme")
+				write(" Lexeme")
 			end
 		end
 
 		{%
 		type ParserListener interface {
-			error(token int, str lexeme, expected tokenSet, stack []parserstate)
-			shift(str lexeme)
+			Error(token int, str Lexeme, expected TokenSet, stack []ParserState)
+			Shift(str Lexeme)
 		@{for f, m in pairs(methods) do}
-			$f(@{generateMethodArgs(m.action)})@{m.ret}? lexeme@;
+			$f(@{generateMethodArgs(m.action)})@{m.ret}? Lexeme@;
 		@{end}
 		}
 		%}
@@ -569,7 +569,7 @@ function Parser(name, parser, tokenNames)
 				local Name = parser:getTokenName(tok, 1)
 				{%
 				func push$Name(state int) parseraction {
-					return func(p *parser, str lexeme) {
+					return func(p *parser, str Lexeme) {
 						p.push(state, str, &p.attribs.${getCaptureStackName(tok)})
 					}
 				}
@@ -580,21 +580,21 @@ function Parser(name, parser, tokenNames)
 	
 	function generateMethods()
 		{%
-		func (p *parser) shift(state int, str lexeme) {
-			p.stack = append(p.stack, parserstate(state))
+		func (p *parser) shift(state int, str Lexeme) {
+			p.stack = append(p.stack, ParserState(state))
 			if str != nil {
-				p.listener.shift(str)
+				p.listener.Shift(str)
 			}
 		}
 
-		func (p *parser) push(state int, str lexeme, lexemeList *terminalList) {
-			s := make(lexeme, len(str))
+		func (p *parser) push(state int, str Lexeme, lexemeList *terminalList) {
+			s := make(Lexeme, len(str))
 			copy(s, str)
 			*lexemeList = append(*lexemeList, s)
 			p.shift(state, str)
 		}
 
-		func (p *parser) traverse(token int, str lexeme) {
+		func (p *parser) traverse(token int, str Lexeme) {
 			pmap := parsertable[p.stack[len(p.stack) - 1]].parsermap
 			action, ok := pmap[token]
 			
@@ -610,7 +610,7 @@ function Parser(name, parser, tokenNames)
 						expected = append(expected, tok)
 					}
 				}
-				p.listener.error(token, str, expected, p.stack)
+				p.listener.Error(token, str, expected, p.stack)
 			}
 			
 			action(p, str)
@@ -631,14 +631,14 @@ function Parser(name, parser, tokenNames)
 	function generateHelperFunctions()
 		{%
 		func shift(nextstate int) parseraction {
-			return func(p *parser, str lexeme) {
+			return func(p *parser, str Lexeme) {
 				p.shift(nextstate, str)
 			}
 		}
 
 		func push(nextstate int, lexemeList *terminalList) parseraction {
-			return func(p *parser, str lexeme) {
-				s := make(lexeme, len(str))
+			return func(p *parser, str Lexeme) {
+				s := make(Lexeme, len(str))
 				copy(s, str)
 				*lexemeList = append(*lexemeList, s)
 				p.shift(nextstate, str)
@@ -647,11 +647,11 @@ function Parser(name, parser, tokenNames)
 
 		func reduce(head int, bodylen int) parseraction {
 			if head == TokEND {
-				return func(p *parser, str lexeme) {
+				return func(p *parser, str Lexeme) {
 					p.remove(bodylen)
 				}
 			}
-			return func(p *parser, str lexeme) {
+			return func(p *parser, str Lexeme) {
 				p.reduce(head, bodylen)
 			}
 		}
@@ -665,11 +665,11 @@ function Parser(name, parser, tokenNames)
 			parser := parser{
 				listener: listener,
 				attribs: attributeStack{@{generateAttribStackInit()}},
-				stack: make([]parserstate, 1),
+				stack: make([]ParserState, 1),
 				unread: false,
 			}
 			var token int
-			var str lexeme
+			var str Lexeme
 			
 			for len(parser.stack) > 0 {
 				state := parsertable[parser.stack[len(parser.stack) - 1]]

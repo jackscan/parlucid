@@ -30,7 +30,7 @@ function generateTokens(name, tokenNames, path)
 	end}
 	)
 	
-	var tokenNames = [${#tokenNames+1}]string{
+	var TokenNames = [${#tokenNames+1}]string{
 		"\@",
 		@{for i=1, #tokenNames do}
 		"${getTokenString(i)}",

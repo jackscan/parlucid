@@ -81,7 +81,7 @@ function generateFsm(name, fsm, tokenNames, context, path)
 	
 		{%
 		@{for i,v in ipairs(accTable) do}
-		{ '${escape(string.char(v.char))}', ${v.next}, tokenSet{@{generateTokenSet(v.tokens)}} },
+		{ '${escape(string.char(v.char))}', ${v.next}, TokenSet{@{generateTokenSet(v.tokens)}} },
 		@{end}
 		%}
 	end
@@ -90,12 +90,12 @@ function generateFsm(name, fsm, tokenNames, context, path)
 		local classname = fsm.classname
 		{%
 		var transitionTable = []struct {
-			potential tokenSet
+			potential TokenSet
 			transitions []transition
 		} {
 			@{for state=0,fsm.nrOfStates-1 do}
 			// State $state
-			{ tokenSet{@{generateTokenSet(fsm[state].potential)}}, []transition{
+			{ TokenSet{@{generateTokenSet(fsm[state].potential)}}, []transition{
 				@{generateTransitions(fsm, state)}
 			} },
 			@{end}
@@ -115,17 +115,17 @@ function generateFsm(name, fsm, tokenNames, context, path)
 		)
 
 		type state int
-		type tokenSet []int
+		type TokenSet []int
 
 		type transition struct {
 			symbol byte
 			next   state
-			tokens tokenSet
+			tokens TokenSet
 		}
 
-		func createTokenizer(reader io.Reader) func(int) (int, lexeme) {
+		func createTokenizer(reader io.Reader) func(int) (int, Lexeme) {
 
-			buffer := make(lexeme, 0, 1)
+			buffer := make(Lexeme, 0, 1)
 			pos := 0
 			state := state(0)
 
@@ -140,7 +140,7 @@ function generateFsm(name, fsm, tokenNames, context, path)
 				if pos >= len(buffer) {
 					if len(buffer) == cap(buffer) {
 						newlen := 2 * len(buffer)
-						newbuffer := make(lexeme, newlen)
+						newbuffer := make(Lexeme, newlen)
 						copy(newbuffer, buffer)
 						buffer = newbuffer
 					}
@@ -160,7 +160,7 @@ function generateFsm(name, fsm, tokenNames, context, path)
 				return
 			}
 
-			traverse := func(sym byte) tokenSet {
+			traverse := func(sym byte) TokenSet {
 				trans := transitionTable[state].transitions
 				lower, upper := 0, len(trans)
 				if upper > 0 {
@@ -182,7 +182,7 @@ function generateFsm(name, fsm, tokenNames, context, path)
 				return nil
 			}
 
-			updateContext := func(tokens, context tokenSet) (tokenSet, bool) {
+			updateContext := func(tokens, context TokenSet) (TokenSet, bool) {
 				for i, j := 0, 0; i < len(tokens); i++ {
 					t := tokens[i]
 					for ; j < len(context) && t > context[j]; j++ {
@@ -205,7 +205,7 @@ function generateFsm(name, fsm, tokenNames, context, path)
 				return nil, false
 			}
 
-			return func(ictx int) (token int, str lexeme) {
+			return func(ictx int) (token int, str Lexeme) {
 
 				context := tokenizerContexts[ictx]
 				str = nil
