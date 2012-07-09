@@ -223,11 +223,11 @@ function Parser(name, parser, tokenNames)
 		{%
 		// $headname ->@{for i,v in ipairs(body) do} ${self:getTokenComment(v)}@{end}
 		func reduce$prodNo(p *parser, str Lexeme) {
-			p.reduce($headtok, $bodylen)
 			@{self:generateCapturesUpdate(prodNo, lparams)}
 			@{if actions then for i, action in pairs(actions) do self:generateAction(self.productions[prodNo], action) end end}
 			@{self:generateStackUpdate(body)}
 			@{caps and next(caps)}?p.attribs.$headstack = append(p.attribs.$headstack, ${self:getTokenName(head)}Parent)@;
+			@{head == 0}?p.remove($bodylen)@:p.reduce($headtok, $bodylen)@;
 		}
 		%}
 	end
@@ -254,10 +254,15 @@ function Parser(name, parser, tokenNames)
 				count = count + 1
 			end
 		end
-		local stackName = container.."."..getCaptureStackName(arg[1])
-		local result = stackName.."[len("..stackName..") - "..count.."]"
-		for i = 2, #arg do
-			result = result.."."..self:getTokenName(arg[i])
+		
+		local result = "Lexeme{}"
+		
+		if #arg > 0 then
+			local stackName = container.."."..getCaptureStackName(arg[1])
+			result = stackName.."[len("..stackName..") - "..count.."]"
+			for i = 2, #arg do
+				result = result.."."..self:getTokenName(arg[i])
+			end
 		end
 		
 		--[[if #arg > 1 then
@@ -671,12 +676,14 @@ function Parser(name, parser, tokenNames)
 			var token int
 			var str Lexeme
 			
+		ParserLoop:
 			for len(parser.stack) > 0 {
 				state := parsertable[parser.stack[len(parser.stack) - 1]]
 				// check for special case: single-reduce
 				if len(state.parsermap) == 1 && state.parsermap[TokEND] != nil {
+					unread := parser.unread
 					state.parsermap[TokEND](&parser, nil)
-					parser.unread = false
+					parser.unread = unread
 					continue
 				}
 				
@@ -687,6 +694,11 @@ function Parser(name, parser, tokenNames)
 				}
 				
 				parser.traverse(token, str)
+			}
+			
+			if token != TokEND {
+				parser.stack = append(parser.stack, 0)
+				goto ParserLoop
 			}
 		}
 		%}
